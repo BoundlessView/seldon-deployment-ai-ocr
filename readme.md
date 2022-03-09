@@ -4,17 +4,15 @@ Moving machine learning models from lab to production is not an easy task. In fa
 
 ---
 **NOTE**
-
 The prerequisites to this article:
  - Basic knowledge of Docker.
  - Basic knowledge of Kubernetes.
  -  An installed Kubernetes cluster with Istio ingress.
  - Installing [Seldon operator](https://docs.seldon.io/projects/seldon-core/en/latest/examples/seldon_core_setup.html) on Kubernetes.
- - The code is on https://.......
-
+ - The code is on https://github.com/BoundlessView/seldon-deployment-ai-ocr
 ---
 
-_*Disclaimer: I have no affiliation with or interest vested in Seldon.io. The aim of the article is purely to share our experience at BoundlessView on how we used Seldon.*_
+_*Disclaimer: We have no affiliation with or interest vested in Seldon.io. The aim of the article is purely to share our experience at BoundlessView on how we used Seldon.*_
 
 ## A brief intro about AI OCR Check reader:
 
@@ -23,30 +21,30 @@ _*Disclaimer: I have no affiliation with or interest vested in Seldon.io. The ai
 **digram here**
 check image >> output in json
 
-**The non-functional requirement:** is its functionality has to be deployed at scale and exposed as API.
+**The non-functional requirement:** OCR functionality has to be deployed at scale and exposed as an API.
 
 **Project main challenges:** the images arrive in several layouts or templates, and many of them contain a mixed text of handwritten and printed or written in two languages; English and Arabic. 
 
 **The solution:** two vision problems are tackled as follow:
- - Faster-R CNN is used to detect and location the fields of interest along with identifying the laanguage.
+ - Faster-R CNN is used to detect and locate the fields of interest and identify the language.
  - Custom implementation of a sequence neural network is used to recognise the text.
 
 **The deployment challenge:**
-We thought the problem was resolved once the required accuracy was attained at the lab. However, as soon as we started thinking about the production, we realised several challenges. We came up with these thoughts and requirements:
+Once we attained the required accuracy at the lab, we thought the problem was resolved. However, as soon as we started thinking about the production, we realised several challenges. We came up with these thoughts and requirements:
 
 - Putting all the models in a monolith service is not a good idea because each model has different hardware requirements.
 - The research and development are still going on to enhance accuracy and speed, so the models will be updated frequently and at a different rate. This is another reason support decoupling the system into microservices.
 - We need an orchestrator to control data flow between the microservices.
 - The caveat for the last requirement is that we don’t want to implement the orchestrator ourselves.
-- We need to run these microservices on Kubernetes, but we want to avoid the complexity of creating and managing Kubernetes resources, including deployment, services, virtual services,...etc
+- The final product will be consist of 5 microservices. We need to run these microservices on Kubernetes, but we want to avoid the complexity of creating and managing Kubernetes resources, including deployment, services, virtual services,...etc
 
 
-The rest of the article illustrates how these requirements have been achieved by [Seldon Core](https://docs.seldon.io/projects/seldon-core/en/latest/index.html). Seldon Core is an open-source framework that makes it easier and faster to deploy machine learning models at scale on Kubernetes.
+The rest of the article illustrates how these requirements have been accomplished by [Seldon Core](https://docs.seldon.io/projects/seldon-core/en/latest/index.html). Seldon Core is an open-source framework that makes it easier and faster to deploy machine learning models at scale on Kubernetes.
 
 #### Serving models:
-The idea of serving is to convert the model weights file into something that can respond to requests. Seldon provides solutions to so many cases in this space. The easiest and fastest one is Prepackaged Model Servers. You only need to give the model location to get it served and deployed straightway on Kubernetes. In our case, this option is not appropriate. In both ML tasks, the final inference output results from preprocessing the input data and evaluating it on a deep learning model. What suits our case is Seldon Core Language Wrappers that containerise machine learning models and code to produce docker images that are then ready to run and serve requests through either REST or gRPC interfaces.
+The idea of serving is to convert the model weights file into something that can respond to requests. Seldon provides solutions to so many cases in this space. The easiest and fastest one is [Prepackaged Model Servers](https://docs.seldon.io/projects/seldon-core/en/latest/servers/overview.html?highlight=%20Prepackaged%20Model%20Servers). You only need to give the model location to get it served and deployed straightway on Kubernetes. In our case, this option is not appropriate. In both ML tasks, the final inference output results from preprocessing the input data and evaluating it on a deep learning model. What suits our case is Seldon Core Language Wrappers that containerise machine learning models and code to produce docker images that are then ready to run and serve requests through either REST or gRPC interfaces.
 
-Before we dive into how the code and models are converted into microservices, I need to clarify a few concepts:
+Before we dive into how the code and models are converted into microservices, we need to clarify a few concepts:
 
 - Seldon core expects us to create a Python class, as an entry point, that implements one of the abstract methods that Seldon Core recognises.
 - To decide which method to include in the class, we have first to identify the service or the [component type](https://docs.seldon.io/projects/seldon-core/en/latest/python/python_component.html) of the microservice. 
@@ -57,8 +55,8 @@ Before we dive into how the code and models are converted into microservices, I 
 - Our inference graph consists of two services of type MODEL.
  X=x1 >> model1 >> y1=x2 >> model2>>y2=y 
 
-**Model1**: is the text detector and localiser. Its `predict()` method receives the check image and predicts the bounding box of Check MICR, which is used to crop the MICR area.
-**Model2**: is the text recogniser. Its `predict()` method receives the cropped image and predicts the text.  
+**Model1**: is the text detector and localiser. Its `predict()` method receives the check image and reurns the bounding box of Check MICR, which is used to crop the MICR area.
+**Model2**: is the text recogniser. Its `predict()` method receives the cropped image and returns the text.  
 
 #### Building docker images: 
 
