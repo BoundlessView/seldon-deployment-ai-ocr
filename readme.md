@@ -42,21 +42,22 @@ Once we attained the required accuracy at the lab, we thought the problem was re
 The rest of the article illustrates how these requirements have been accomplished by [Seldon Core](https://docs.seldon.io/projects/seldon-core/en/latest/index.html). Seldon Core is an open-source framework that makes it easier and faster to deploy machine learning models at scale on Kubernetes.
 
 #### Serving models:
-The idea of serving is to convert the model weights file into something that can respond to requests. Seldon provides solutions to so many cases in this space. The easiest and fastest one is [Prepackaged Model Servers](https://docs.seldon.io/projects/seldon-core/en/latest/servers/overview.html?highlight=%20Prepackaged%20Model%20Servers). You only need to give the model location to get it served and deployed straightway on Kubernetes. In our case, this option is not appropriate. In both ML tasks, the final inference output results from preprocessing the input data and evaluating it on a deep learning model. What suits our case is Seldon Core Language Wrappers that containerise machine learning models and code to produce docker images that are then ready to run and serve requests through either REST or gRPC interfaces.
+The idea of serving is to convert the model weights file into something that can respond to requests. Seldon provides solutions to so many cases in this space. The easiest and fastest one is [Prepackaged Model Servers](https://docs.seldon.io/projects/seldon-core/en/latest/servers/overview.html?highlight=%20Prepackaged%20Model%20Servers). You only need to give the model location to get it served and deployed straightway on Kubernetes. In our case, this option is not appropriate. In both ML tasks, the final inference output results from preprocessing the input data and evaluating it on a deep learning model. What suits our case is Seldon Core [Python Language Wrapper](https://docs.seldon.io/projects/seldon-core/en/latest/nav/config/wrappers.html) that containerise machine learning models and code to produce docker images that are then ready to run and serve requests through either REST or gRPC interfaces.
 
 Before we dive into how the code and models are converted into microservices, we need to clarify a few concepts:
 
-- Seldon core expects us to create a Python class, as an entry point, that implements one of the abstract methods that Seldon Core recognises.
+- Seldon core expects us to create a Python class, as an entrypoint, that implements one of the abstract methods that Seldon Core recognises.
 - To decide which method to include in the class, we have first to identify the service or the [component type](https://docs.seldon.io/projects/seldon-core/en/latest/python/python_component.html) of the microservice. 
 - Seldon core offers four components; Model, Combiners, Routers and Transformers. The decision on which type to select depends on what the microservice is doing and its location in the inference graph. For example; 
     1. If the service receives an observation and makes a prediction, then the component or service type is MODEL, and the class has to implement the `predict()` method.  
     2. If the service is needed to combine outputs of another two MODEL services, then the component type is COMBINER, and the class has to implement `aggregate()` method.
     3. For further details, [Python Components](https://docs.seldon.io/projects/seldon-core/en/latest/python/python_component.html) and [Graphs](https://docs.seldon.io/projects/seldon-core/en/latest/examples/graph-metadata.html?)
-- Our inference graph consists of two services of type MODEL.
- X=x1 >> model1 >> y1=x2 >> model2>>y2=y 
 
-**Model1**: is the text detector and localiser. Its `predict()` method receives the check image and reurns the bounding box of Check MICR, which is used to crop the MICR area.
-**Model2**: is the text recogniser. Its `predict()` method receives the cropped image and returns the text.  
+- The data flow of our two MODEL services inference graph:
+![image](./docs/images/inference-graph.jpg)
+
+**Detector**: is the text detector and localiser. Its `predict()` method receives the check image, predicts the check's bounding box, and returns the cropped MICR area.
+**Recogniser**: is the text recogniser. Its `predict()` method receives the cropped image and predicts the text.
 
 #### Building docker images: 
 
