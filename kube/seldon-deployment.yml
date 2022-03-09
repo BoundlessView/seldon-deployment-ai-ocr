@@ -1,0 +1,89 @@
+---
+apiVersion: machinelearning.seldon.io/v1alpha2
+kind: SeldonDeployment
+metadata:
+  name: checks-reader
+  namespace: default
+  labels:
+    app: seldon
+spec:
+  annotations:
+    deployment_version: v1
+    seldon.io/rest-read-timeout: '100000'
+    seldon.io/rest-connection-timeout: '100000'
+    seldon.io/grpc-read-timeout: '100000'
+    seldon.io/grpc-max-message-size: '10000000'
+  name: checks-reader
+  predictors:
+  - componentSpecs:
+    - spec:
+        containers:
+        - image: boundlessview/detection-infer:latest
+          imagePullPolicy: Always
+          name: detection-infer
+          env:
+          - name: API_TYPE
+            value: "REST"
+          - name: MODEL_NAME
+            value: "Serving"
+          - name: SERVICE_TYPE
+            value: "MODEL"
+          - name: PERSISTENCE
+            value: "0"
+          - name: FLASK_JSONIFY_PRETTYPRINT_REGULAR
+            value: "True"
+        terminationGracePeriodSeconds: 20
+        imagePullSecrets:
+        - name: regcred
+      metadata:
+        name: detection-infer
+    - spec:
+        containers:
+        - image: boundlessview/recognition-infer:latest
+          imagePullPolicy: Always
+          name: recognition-infer
+          env:
+          - name: API_TYPE
+            value: "REST"
+          - name: MODEL_NAME
+            value: "Serving"
+          - name: SERVICE_TYPE
+            value: "MODEL"
+        terminationGracePeriodSeconds: 20
+        imagePullSecrets:
+        - name: regcred
+      metadata:
+        name: recognition-infer
+    graph:
+      name: detection-infer
+      endpoint:
+        type: REST
+      type: MODEL
+      parameters:
+      - name: input_tensor_names
+        value: "image"
+        type: STRING
+      - name: output_tensor_names
+        value: "output/boxes"
+        type: STRING
+      - name: prefix_name
+        value: "TDServing"
+        type: STRING
+      children:
+        - name: recognition-infer
+          endpoint:
+            type: REST
+          type: MODEL
+          parameters:
+          - name: input_tensor_names
+            value: "image,input_length"
+            type: STRING
+          - name: output_tensor_names
+            value: "ema/output/labels,ema/output/probs"
+            type: STRING
+          - name: prefix_name
+            value: "TRServing"
+            type: STRING
+          children: []
+    name: main
+    replicas: 1

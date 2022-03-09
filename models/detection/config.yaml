@@ -1,0 +1,82 @@
+!!python/object:config.AttrDict
+AZEXP: !!python/object:config.AttrDict
+  ARTIFACTS:
+  - graph_meta
+  - tensorboard_events
+  - log_files
+  - stats_files
+  CHKP_METRIC: mse
+  EXP_NOTE: ''
+  MODEL: !!python/object:config.AttrDict
+    NAME: micr-detection
+    _freezed: true
+  NAME: micr-detection
+  USE: 'True'
+  _freezed: true
+BACKBONE: !!python/object:config.AttrDict
+  FREEZE_AFFINE: false
+  FREEZE_AT: 0
+  STRIDE_1X1: false
+  TF_PAD_MODE: false
+  WEIGHTS: ''
+  _freezed: true
+CODE: !!python/object:config.AttrDict
+  COMMIT: master
+  _freezed: true
+DATA: !!python/object:config.AttrDict
+  ABSOLUTE_COORD: true
+  BASEDIR: /app/chequesdataset
+  BATCH_SIZE: 8
+  CLASS_NAMES:
+  - BG
+  - en
+  - ar
+  - sig
+  - micr
+  NUM_CATEGORY: 4
+  NUM_WORKERS: 1
+  TRAIN: !!python/tuple
+  - coco_train
+  VAL: !!python/tuple
+  - coco_val
+  VERSION: chequesdataset.zip
+  _freezed: true
+HYPER: !!python/object:config.AttrDict
+  BACKBONE: !!python/object:config.AttrDict
+    NORM: SyncBN
+    _freezed: true
+  PREPROC: !!python/object:config.AttrDict
+    CROP_RANGE:
+    - 0.6
+    - 0.62
+    TRAIN_SHORT_EDGE_SIZE:
+    - 100
+    - 100
+    _freezed: true
+  TRAIN: !!python/object:config.AttrDict
+    WEIGHT_DECAY: 0.0001
+    _freezed: true
+  _freezed: true
+PREPROC: !!python/object:config.AttrDict
+  PIXEL_MEAN:
+  - 0
+  PIXEL_STD:
+  - 255
+  _freezed: true
+TRAIN: !!python/object:config.AttrDict
+  BASE_LR: 0.01
+  CHECKPOINT_PERIOD: 5
+  EVAL_PERIOD: 5
+  LR_SCHEDULE:
+  - 800
+  - 1400
+  - 2000
+  NUM_GPUS: 1
+  RESUME_FROM_LATEST: 'False'
+  STARTING_EPOCH: 1
+  STEPS_PER_EPOCH: 80
+  WARMUP: 80
+  WARMUP_INIT_LR: 1.0e-05
+  _freezed: true
+TRAINER: replicated
+_freezed: true
