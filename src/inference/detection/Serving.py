@@ -21,7 +21,7 @@ logger = logging.getLogger('Serving')
 
 class Serving(object):
     
-    def __init__(self,graph_path,config_path,input_tensor_names,output_tensor_names,prefix_name='import'):
+    def __init__(self,input_tensor_names,output_tensor_names,graph_path='./compact.pb',config_path='./config.yaml',prefix_name='import'):
         """
         These will be passed at runtime from the graph definition parameters defined in your seldondeployment kubernetes resource manifest
         """
@@ -40,39 +40,18 @@ class Serving(object):
        
         self.resizer= MICRCustomResize(short_edge_length=self.cfg.HYPER.PREPROC.TRAIN_SHORT_EDGE_SIZE,
                                        interp=cv2.INTER_LINEAR)
-    def predict_raw1(self, 
-            msg: prediction_pb2.SeldonMessage
-            ) -> prediction_pb2.SeldonMessage:
-        
-        logger.info("type(msg) {}".format(type(msg)))
-        X=np.expand_dims(np.array(msg['data']['ndarray']),axis=0)
-
-        
-
-        logger.info("image size = {}".format(X.shape))
-        boxes = self.serving_graph.sess.run(self.output_tensors,
-                                {self.input_tensors[0]: X})
-        
-      
-        logger.info("boxes {}".format(boxes))
-     
-
-        
-        return boxes
-
-
-
     def predict(self,X,feature_names):
         """
         inputs:
             
-            X: [str,numpy.ndarray hXwXc]
+            X: [str,str base64]
             feature_names: ['image_id','image']
 
         outputs:
             results: {'image_id': str, 
+                      'image': nd.array
                       'image_shape': (h, w, c), 
-                      'micr_bbox': [y1, 641.y2]}
+                      'bbox': [y1, y2]}
         """
 
         logger.info("feature_names {}".format(feature_names))

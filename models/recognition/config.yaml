@@ -1,0 +1,172 @@
+!!python/object:config.AttrDict
+AZEXP: !!python/object:config.AttrDict
+  ARTIFACTS:
+  - graph_meta
+  - tensorboard_events
+  - log_files
+  - stats_files
+  CHKP_METRIC: ema/total_cer
+  EXP_NOTE: ''
+  MODEL: !!python/object:config.AttrDict
+    NAME: checks-text-recognition-micr
+    _freezed: true
+  NAME: checks-text-recognition-micr
+  USE: 'True'
+  _freezed: true
+BACKBONE: !!python/object:config.AttrDict
+  FREEZE_AFFINE: false
+  FREEZE_AT: 0
+  WEIGHTS: ''
+  _freezed: true
+CODE: !!python/object:config.AttrDict
+  COMMIT: checks-text-recognition-micr
+  _freezed: true
+DATA: !!python/object:config.AttrDict
+  ABSOLUTE_COORD: true
+  BALANCE: true
+  BANKS:
+  - 1
+  BASEDIR: /app/chequesdataset
+  CLASS_NAMES: []
+  IVOC:
+    0: '%%'
+    1: '2'
+    2: '9'
+    3: '6'
+    4: '3'
+    5: <
+    6: '8'
+    7: '4'
+    8: '0'
+    9: '1'
+    10: '5'
+    11: '7'
+    12: ':'
+    13: ' '
+    14: ''
+  NUM_CATEGORY: -1
+  NUM_WORKERS: 1
+  TAGS:
+    6: micr
+  TAGS_FILTER:
+  - 6
+  TRAIN: !!python/tuple
+  - coco_train
+  TYPES:
+  - str
+  - unstr
+  VAL: !!python/tuple
+  - coco_val
+  VERSION: chequesdataset.zip
+  VOC:
+    ? ''
+    : 14
+    ' ': 13
+    '%%': 0
+    '0': 8
+    '1': 9
+    '2': 1
+    '3': 4
+    '4': 7
+    '5': 10
+    '6': 3
+    '7': 11
+    '8': 6
+    '9': 2
+    ':': 12
+    <: 5
+  VOCABULARY:
+    6: 0123456789:<
+  VOCL: 15
+  _freezed: true
+HYPER: !!python/object:config.AttrDict
+  BACKBONE: !!python/object:config.AttrDict
+    NORM: SyncBN
+    _freezed: true
+  TRAIN: !!python/object:config.AttrDict
+    WEIGHT_DECAY: 0.001
+    _freezed: true
+  _freezed: true
+INFER: !!python/object:config.AttrDict
+  CTC_DECODE: !!python/object:config.AttrDict
+    BEAM_WIDTH: 100
+    GREEDY: true
+    TOP_PATHS: 1
+    _freezed: true
+  _freezed: true
+MODEL: !!python/object:config.AttrDict
+  INFER_SOURCES:
+  - primary
+  - secondary
+  - ema
+  NAME: MTCNNTCN
+  TOWER_NAMES:
+  - primary
+  - secondary
+  - ema
+  _freezed: true
+MT: !!python/object:config.AttrDict
+  ADAM_BETA_1_AFTER_RAMPDOWN: 0.5
+  ADAM_BETA_1_BEFORE_RAMPDOWN: 0.9
+  ADAM_BETA_2_AFTER_RAMPUP: 0.999
+  ADAM_BETA_2_DURING_RAMPUP: 0.99
+  ADAM_EPSILON: 1.0e-08
+  APPLY_CONSISTENCY_TO_LABELED: true
+  CONSISTENCY_TRUST: 0.0
+  EMA_CONSISTENCY: true
+  EMA_DECAY_AFTER_RAMPUP: 0.999
+  EMA_DECAY_DURING_RAMPUP: 0.99
+  LOGIT_DISTANCE_COST: 0.0
+  MAX_CONSISTENCY_COST: 0.5
+  MAX_LEARNING_RATE: 0.003
+  NUM_LOGITS: 1
+  RAMPDOWN_LENGTH: 0
+  RAMPUP_LENGTH: 5000
+  TRAINING_LENGTH: 80000
+  _freezed: true
+PREPROC: !!python/object:config.AttrDict
+  IMG: !!python/object:config.AttrDict
+    FIXED_H: 20
+    _freezed: true
+  LABEL: !!python/object:config.AttrDict
+    TEXT: lower
+    _freezed: true
+  PIXEL_MEAN:
+  - 0
+  PIXEL_STD:
+  - 255
+  TAGS:
+    6:
+      max_label: 50
+      w_min_range:
+      - 90
+      - 100
+      width_limit:
+      - -1
+      - -1
+  TRAIN_SHORT_EDGE_SIZE: !!python/object:config.AttrDict
+    _freezed: true
+  W_MIN_RANGE:
+  - 90
+  - 100
+  _freezed: true
+TRAIN: !!python/object:config.AttrDict
+  BASE_LR: 0.01
+  BATCH_SIZE: 1
+  BATCH_SIZE_ALL_GPUS: 1
+  CHECKPOINT_PERIOD: 3
+  EVAL_PERIOD: 3
+  LR_SCHEDULE:
+  - 1280
+  - 1920
+  - 2560
+  NUM_GPUS: 1
+  OPTIMIZER: adam
+  RESUME_FROM_LATEST: 'False'
+  STARTING_EPOCH: 1
+  STEPS_PER_EPOCH: '320'
+  WARMUP: 64
+  WARMUP_INIT_LR: 0.0033000000000000004
+  _freezed: true
+TRAINER: replicated
+_freezed: true

@@ -18,7 +18,7 @@ spec:
   - componentSpecs:
     - spec:
         containers:
-        - image: boundlessview/detection-infer:latest
+        - image: boundlessview/detection-infer:v1.0.0
           imagePullPolicy: Always
           name: detection-infer
           env:
@@ -39,7 +39,7 @@ spec:
         name: detection-infer
     - spec:
         containers:
-        - image: boundlessview/recognition-infer:latest
+        - image: boundlessview/recognition-infer:v1.0.0
           imagePullPolicy: Always
           name: recognition-infer
           env:
@@ -49,6 +49,8 @@ spec:
             value: "Serving"
           - name: SERVICE_TYPE
             value: "MODEL"
+          - name: PERSISTENCE
+            value: "0"
         terminationGracePeriodSeconds: 20
         imagePullSecrets:
         - name: regcred

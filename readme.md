@@ -86,13 +86,13 @@ CMD seldon-core-microservice $MODEL_NAME $API_TYPE --service-type $SERVICE_TYPE 
 At the run time, `seldon-core-microservice` Python wrapper turns Serving.py into a fully operational microservice that receives requests on REST/gRPC interfaces.
 
 ```bash
-docker build --build-arg EXPERIMENT_NAME='detection' -t boundlessview/detection-infer -f docker/detection/inference.dockerfile ./
-docker push  boundlessview/detection-infer
+docker build --build-arg EXPERIMENT_NAME='detection' -t boundlessview/detection-infer:v1.0.0 -f docker/detection/inference.dockerfile ./
+docker push  boundlessview/detection-infer:v1.0.0
 ```
 For the text recognition task, the same structure is followed as for the detection.
 ```bash
-docker build --build-arg EXPERIMENT_NAME='recognition' -t boundlessview/recognition-infer -f docker/recognition/inference.dockerfile ./
-docker push  boundlessview/recognition-infer
+docker build --build-arg EXPERIMENT_NAME='recognition' -t boundlessview/recognition-infer:v1.0.0 -f docker/recognition/inference.dockerfile ./
+docker push boundlessview/recognition-infer:v1.0.0
 ```
 
 
@@ -181,7 +181,7 @@ spec:
     name: main
     replicas: 1
 ```
-> The variables in the `parameters` list are parameters that passed to the initialization method of `Serving.py` class. 
+> The variables in the `parameters` list are arguments that passed to the initialization method of `Serving.py` class. 
 
 A prerequisite to applying this Seldon deployment on Kubernetes is installing Seldon Core Operator. It reads the CRD definition of Seldon Deployment resources applied to the cluster and ensures that all required components like Pods and Services are created. The operator also creates `Orchestrator Orchestrator` for this deployment, responsible for managing the intra-graph traffic. 
 
