@@ -1,12 +1,12 @@
 An easy and fast way to serve complex machine learning inference graphs at scale on Kubernetes.
 
-Moving machine learning models from lab to production is not an easy task. In fact, in many ML projects, it is as challenging as solving the actual data modelling problem or even harder, mainly when the inference pipeline implies many interplaying components or thousands to millions of inference hits will be served. According to [Algorithmia 2021 survey](https://info.algorithmia.com/tt-state-of-ml-2021), 64% of organisations take them a month or longer to deploy a trained model to production. In this article, we will see how deploying machine learning can be easier and quicker with Seldon. As a walk-through example, we will be using Seldon to build the inference graph of an AI OCR that reads Checks. The focus is on Model-as-Service deployment type.
+Moving machine learning models from lab to production is not an easy task. In fact, in many ML projects, it is as challenging as solving the actual data modelling problem or even harder, mainly when the inference pipeline implies many interplaying components and thousands to millions of inference hits will be served. According to [Algorithmia 2021 survey](https://info.algorithmia.com/tt-state-of-ml-2021), 64% of organisations take them a month or longer to deploy a trained model to production. In this article, we will see how deploying machine learning can be easier and quicker with Seldon. As a walk-through example, we will be using Seldon to build the inference graph of an AI OCR that reads Checks. The focus is on Model-as-Service deployment type.
 
 This article is organised as follow:
   1. [A brief introduction about the AI Checks Reader project.](#ai-ocr-intro)
   2. [`seldon-core-microservice` to convert model & code into fully-fledged microservice](#seldon-core-microservice).
   3. [`Seldon Deployment CRD` to deploy inference graph on Kubernetes.](#deployment)
-  4. Testing Seldon Deployment.
+  4. [Testing Seldon Deployment](#testing).
   5. Seldon Limitations.
 
 
@@ -33,12 +33,12 @@ check image >> output in json
 
 **Project main challenges:** the images arrive in several layouts or templates, and many of them contain a mixed text of handwritten and printed or written in two languages; English and Arabic. 
 
-**The solution:** the two vision problems are tackled as follow:
- - Faster-R CNN is used to detect and locate the fields of interest and identify the text language on check images.
+**The solution:** tackled the two vision problems as follow:
+ - [Faster R-CNN](https://github.com/tensorpack/tensorpack/tree/master/examples/FasterRCNN) is used to detect and locate the fields of interest and identify the text language on check images.
  - Custom implementation of a sequence neural network is used to recognise the text.
 
 **The deployment challenge:**
-Once the required accuracy is attained at the lab, we thought the problem was solved. However, as soon as we started production planning, we realised several challenges. We came up with these thoughts and requirements:
+Once the required accuracy was attained at the lab, we thought the mission was accomplished as data scientists. However, as soon as we started production planning, we realised several challenges. We came up with these thoughts and requirements:
 
 - Putting all the models in a monolith service is not a good idea because each model has different hardware requirements.
 - The research and development are in progress to enhance the accuracy and speed, so the models will be updated frequently and at a different rate. This is another reason support decoupling the system into microservices.
@@ -194,7 +194,7 @@ spec:
 ```
 > The variables in the `parameters` list are arguments that passed to the initialization method of `Serving.py` class. 
 
-A prerequisite to applying this Seldon deployment on Kubernetes is installing Seldon Core Operator. It reads the CRD definition of Seldon Deployment resources applied to the cluster and ensures that all required components like Pods and Services are created. The operator also creates `Orchestrator Orchestrator` for this deployment, responsible for managing the intra-graph traffic. 
+A prerequisite to applying this Seldon deployment on Kubernetes is installing Seldon Core Operator. It reads the CRD definition of Seldon Deployment resources applied to the cluster and ensures that all required components like pods, services, virtual services are created. The operator also creates `Orchestrator Orchestrator` for this deployment, responsible for managing the intra-graph traffic. 
 
 As per our graph, `recognition-infer` is a child of `detection-infer` of predictor. The orchestrator intercepts the requests coming to this Seldon Deployment and forwards it to `detection-infer`. It then routes its output to `recognition-infer`. 
 
@@ -205,8 +205,18 @@ As per our graph, `recognition-infer` is a child of `detection-infer` of predict
 **Apply Seldon deployment**
 ```sh
 kubectl apply -f kube\seldon-deployment.yml
+#show the pods
 ```
 
 
 
-**Test**
+##  4. Testing Seldon Deployment  <a name="testing"></a>
+
+test through puthon request.
+
+show the image scarched.
+
+test through grpc
+
+
+
