@@ -1,1 +1,7 @@
 - remove I and use We.
+- revisit the seldon deployment part.
+- check image >> output in json
+
+
+
+- use the concept of metadata
