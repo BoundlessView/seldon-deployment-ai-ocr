@@ -110,7 +110,7 @@ docker push boundlessview/recognition-infer:v1.0.0
 ## 3. `Seldon Deployment CRD` to deploy inference graph on Kubernetes <a name="deployment"></a>
 
 
-**How are we going to run those microservices on Kubernetes?** A possible answer is creating a typical [Kubernetes Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) for each docker image. This is fine, but how the detector service is going to connect to the recogniser? Each microservice is prepared to evaluate the input data on the loaded ML model and return the result, while in our [inference graph](#inference-graph), the output of the detector needs to be forwarded to the recogniser. So, an Orchestration is required here to facilitate this communication. Seldon Core provides this out of the box through [Seldon Deployment CRD](https://docs.seldon.io/projects/seldon-core/en/latest/workflow/overview.html#seldondeployment-crd) (Custom Resource Definition).
+**How are we going to run those microservices on Kubernetes?** A possible answer is creating a typical [Kubernetes Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) for each docker image. This is fine, but how the detector service is going to connect to the recogniser? Each microservice is prepared to evaluate the input data on the loaded ML model and return a result, while in our [inference graph](#inference-graph), the output of the detector needs to be forwarded to the recogniser. So, an Orchestration is required here to facilitate this communication. Seldon Core provides this out of the box through [Seldon Deployment CRD](https://docs.seldon.io/projects/seldon-core/en/latest/workflow/overview.html#seldondeployment-crd) (Custom Resource Definition).
 
 As described in the original [documentation](https://docs.seldon.io/projects/seldon-core/en/latest/graph/inference-graph.html), the key components of Seldon Deployment CRD:
 
@@ -192,15 +192,23 @@ spec:
     name: main
     replicas: 1
 ```
-> The variables in the `parameters` list are arguments that passed to the initialization method of `Serving.py` class. 
+> The variables in the `parameters` list are arguments passed to the initialization method of `Serving.py` class. 
 
-A prerequisite to applying this Seldon deployment on Kubernetes is installing Seldon Core Operator. It reads the CRD definition of Seldon Deployment resources applied to the cluster and ensures that all required components like pods, services, virtual services are created. The operator also creates `Orchestrator Orchestrator` for this deployment, responsible for managing the intra-graph traffic. 
+A prerequisite to applying this Seldon deployment on Kubernetes is installing [Seldon operator](https://docs.seldon.io/projects/seldon-core/en/latest/examples/seldon_core_setup.html). The operatror reads the CRD definition of Seldon Deployment resources applied to the cluster and ensures that all required components like pods, services, virtual services are created. It also creates `Orchestrator` for this deployment, responsible for managing the intra-graph traffic. 
 
-As per our graph, `recognition-infer` is a child of `detection-infer` of predictor. The orchestrator intercepts the requests coming to this Seldon Deployment and forwards it to `detection-infer`. It then routes its output to `recognition-infer`. 
 
 <p align="center">
   <img src="./docs/images/service_orchestrator.jpg" />
 </p>
+
+**The data flows as follow:**
+1- Istio Gateway receives the client's request.
+2- It forwards the request to Orchestrator.
+3- The Orchestrator manages the traffic according to how the components are structured in the `graph` element in Seldon Deployment. So for our case, it sends the request to `detection-infer`.
+4-5 The Orchestrator routes the output of  `detection-infer` to `recognition-infer`.
+6-7 The Orchestrator sends the output of `recognition-infer` to the client.
+
+
 
 **Apply Seldon deployment**
 ```sh
