@@ -1,6 +1,6 @@
 An easy and fast way to serve complex machine learning inference graphs at scale on Kubernetes.
 
-Moving machine learning models from lab to production is not an easy task. In fact, in many ML projects, it is as challenging as solving the actual data modelling problem or even harder, mainly when the inference pipeline implies many interplaying components and thousands to millions of inference hits will be served. According to [Algorithmia 2021 survey](https://info.algorithmia.com/tt-state-of-ml-2021), 64% of organisations take them a month or longer to deploy a trained model to production. In this article, we will see how deploying machine learning can be easier and quicker with Seldon. As a walk-through example, we will be using Seldon to build the inference graph of an AI OCR that reads Checks. The focus is on Model-as-Service deployment type.
+Moving machine learning models from lab to production is not an easy task. In fact, in many ML projects, it is as challenging as solving the actual data modelling problem or even harder, mainly when the inference pipeline implies many interplaying components and thousands to millions of inference hits will be served. According to [Algorithmia 2021 survey](https://info.algorithmia.com/tt-state-of-ml-2021), 64% of organisations take them a month or longer to deploy a trained model to production. The report also states that 38% of organisations spend more than 50% of their data scientists’ time on deployment. In this article, we will see how deploying machine learning can be easier and quicker with Seldon. As a walk-through example, we will be using Seldon to build the inference graph of an AI OCR that reads Checks. The focus is on Model-as-Service deployment type.
 
 This article is organised as follow:
   1. [A brief introduction about the AI Checks Reader project.](#ai-ocr-intro)
@@ -34,20 +34,20 @@ check image >> output in json
 **Project main challenges:** the images arrive in several layouts or templates, and many of them contain a mixed text of handwritten and printed or written in two languages; English and Arabic. 
 
 **The solution:** tackled the two vision problems as follow:
- - [Faster R-CNN](https://github.com/tensorpack/tensorpack/tree/master/examples/FasterRCNN) is used to detect and locate the fields of interest and identify the text language on check images.
+ - [Faster R-CNN](https://arxiv.org/abs/1506.01497) is used to detect and locate the fields of interest and identify the text language on check images.
  - Custom implementation of a sequence neural network is used to recognise the text.
 
 **The deployment challenge:**
-Once the required accuracy was attained at the lab, we thought the mission was accomplished as data scientists. However, as soon as we started production planning, we realised several challenges. We came up with these thoughts and requirements:
+Once the required accuracy was attained at the lab, we thought the mission was accomplished. However, as soon as we started production planning, we realised several challenges. We came up with these thoughts and requirements:
 
 - Putting all the models in a monolith service is not a good idea because each model has different hardware requirements.
 - The research and development are in progress to enhance the accuracy and speed, so the models will be updated frequently and at a different rate. This is another reason support decoupling the system into microservices.
 - We need an orchestrator to control data flow between the microservices.
 - The caveat for the latter is that we don’t want to implement the orchestrator ourselves.
-- The final product will be consist of 5 microservices. We need to run them on Kubernetes, but we want to avoid the overhead of creating and managing Kubernetes resources, including deployment, services, virtual services,...etc
+- The final product will consist of 5 microservices. We need to run them on Kubernetes, but we want to avoid the overhead of creating and managing Kubernetes resources, including deployment, services, virtual services,...etc
 
 
-The rest of the article illustrates how these requirements have been accomplished by [Seldon Core](https://docs.seldon.io/projects/seldon-core/en/latest/index.html). Seldon Core is an open-source framework that makes it easier and faster to deploy machine learning models at scale on Kubernetes.
+The rest of the article illustrates how these requirements are accomplished by [Seldon Core](https://docs.seldon.io/projects/seldon-core/en/latest/index.html). Seldon Core is an open-source framework that makes it easier and faster to deploy machine learning models at scale on Kubernetes.
 
 ## 2. `seldon-core-microservice` to convert model & code into fully-fledged microservice <a name="seldon-core-microservice"></a>
 
