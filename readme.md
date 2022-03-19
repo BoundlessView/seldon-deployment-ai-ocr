@@ -202,6 +202,7 @@ A prerequisite to applying this Seldon deployment on Kubernetes is installing [S
 </p>
 
 **The data flows as follow:**
+
 1- Istio Gateway receives the client's request.
 2- It forwards the request to Orchestrator.
 3- The Orchestrator manages the traffic according to how the components are structured in the `graph` element in Seldon Deployment. So for our case, it sends the request to `detection-infer`.
