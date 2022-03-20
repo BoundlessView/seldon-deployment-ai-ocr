@@ -34,8 +34,8 @@ check image >> output in json
 **Project main challenges:** the images arrive in several layouts or templates, and many of them contain a mixed text of handwritten and printed or written in two languages; English and Arabic. 
 
 **The solution:** tackled the two vision problems as follow:
- - [Faster R-CNN](https://arxiv.org/abs/1506.01497) is used to detect and locate the fields of interest and identify the text language on check images.
- - Custom implementation of a sequence neural network is used to recognise the text.
+ - [Faster R-CNN](https://arxiv.org/abs/1506.01497) is used to detect and locate the fields of interest and identify the text language on check images. 
+ - Custom implementation of a sequence neural network is used to recognise the text. In a separate story, we will share how our proprietary sequence network achieved 5-7x inferencing speed than LSTM.
 
 **The deployment challenge:**
 Once the required accuracy was attained at the lab, we thought the mission was accomplished. However, as soon as we started production planning, we realised several challenges. We came up with these thoughts and requirements:
