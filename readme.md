@@ -1,13 +1,14 @@
-An easy and fast way to serve complex machine learning inference graphs at scale on Kubernetes.
+An easy and fast way to serve machine learning inference graphs at scale on Kubernetes.
 
-Moving machine learning models from lab to production is not an easy task. In fact, in many ML projects, it is as challenging as solving the actual data modelling problem or even harder, mainly when the inference pipeline implies many interplaying components and thousands to millions of inference hits will be served. According to [Algorithmia 2021 survey](https://info.algorithmia.com/tt-state-of-ml-2021), 64% of organisations take them a month or longer to deploy a trained model to production. The report also states that 38% of organisations spend more than 50% of their data scientists’ time on deployment. In this article, we will see how deploying machine learning can be easier and quicker with Seldon. As a walk-through example, we will be using Seldon to build the inference graph of an AI OCR that reads Checks. The focus is on Model-as-Service deployment type.
+Moving machine learning models from lab to production is not an easy task. In fact, in many ML projects, it is as challenging as solving the actual data modelling problem or even harder. According to [Algorithmia 2021 survey](https://info.algorithmia.com/tt-state-of-ml-2021), 64% of organisations take them a month or longer to deploy a trained model to production. The report also states that 38% of organisations spend more than 50% of their data scientists’ time on deployment. In this article, we will see how deploying machine learning can be easier and quicker with Seldon. As a walk-through example, we will be using Seldon to build the inference graph of an AI OCR that reads Checks. The focus is on Model-as-Service deployment type.
 
 This article is organised as follow:
   1. [A brief introduction about the AI Checks Reader project.](#ai-ocr-intro)
   2. [`seldon-core-microservice` to convert model & code into fully-fledged microservice](#seldon-core-microservice).
   3. [`Seldon Deployment CRD` to deploy inference graph on Kubernetes.](#deployment)
   4. [Testing Seldon Deployment](#testing).
-  5. Seldon Limitations.
+  5. [Seldon Limitations](#limitations).
+  6. [Conclusion](#conclusion)
 
 
 >**NOTE**
@@ -18,7 +19,7 @@ This article is organised as follow:
 > - Installing [Seldon operator](https://docs.seldon.io/projects/seldon-core/en/latest/examples/seldon_core_setup.html) on Kubernetes.
 > - The code is on https://github.com/BoundlessView/seldon-deployment-ai-ocr
 
-_*Disclaimer: We have no affiliation with or interest vested in Seldon.io. The aim of the article is purely to share our experience at BoundlessView on how we used Seldon.*_
+_*Disclaimer: We have no affiliation with or interest vested in Seldon.io. The aim of the article is purely to share our experience at [BoundlessView](http://boundlessview.com) on how we used Seldon.*_
 
 ## 1. A brief introduction about the AI Checks Reader project <a name="ai-ocr-intro"></a>
 
@@ -26,8 +27,9 @@ The business motivation is that banks want to reduce manual data entry to shorte
 
 **The main functional requirement:** is to extract all textual information from check images. For simplicity, in this writing, the task is limited to extracting only the MICR text from check images.
 
-**digram here**
-check image >> output in json
+<p align="center">
+  <img src="./docs/images/aicr.png" />
+</p>
 
 **The non-functional requirement:** OCR functionality has to be deployed at scale and exposed as an API.
 
@@ -35,7 +37,7 @@ check image >> output in json
 
 **The solution:** tackled the two vision problems as follow:
  - [Faster R-CNN](https://arxiv.org/abs/1506.01497) is used to detect and locate the fields of interest and identify the text language on check images. 
- - Custom implementation of a sequence neural network is used to recognise the text. In a separate story, we will share how our proprietary sequence network achieved 5-7x inferencing speed than LSTM.
+ - Custom implementation of a sequence neural network is used to recognise the text. In a separate story, we will share how our proprietary network achieved 5-7x inferencing speed compared to LSTM.
 
 **The deployment challenge:**
 Once the required accuracy was attained at the lab, we thought the mission was accomplished. However, as soon as we started production planning, we realised several challenges. We came up with these thoughts and requirements:
@@ -52,13 +54,13 @@ The rest of the article illustrates how these requirements are accomplished by [
 ## 2. `seldon-core-microservice` to convert model & code into fully-fledged microservice <a name="seldon-core-microservice"></a>
 
 #### Serving models:
-The idea of serving is to convert the model weights file into something that can respond to requests. Seldon provides solutions to so many cases in this space. The easiest and fastest one is [Prepackaged Model Servers](https://docs.seldon.io/projects/seldon-core/en/latest/servers/overview.html?highlight=%20Prepackaged%20Model%20Servers). You only need to provide the model's file location to get it turned into a service and deployed straightway on Kubernetes. In our case, this option is not appropriate. In both ML tasks, the final inference output results from preprocessing the input data and evaluating it on a deep learning model. What suits our case is Seldon Core [Python Language Wrapper `seldon-core-microservice`](https://docs.seldon.io/projects/seldon-core/en/latest/nav/config/wrappers.html) that containerises machine learning models and code and produces docker images that are ready to run and serve requests through either REST or gRPC interfaces.
+The idea of serving is to convert the model weights file into something that can respond to requests. Seldon provides solutions to so many cases in MLOps space. The easiest and fastest one is [Prepackaged Model Servers](https://docs.seldon.io/projects/seldon-core/en/latest/servers/overview.html?highlight=%20Prepackaged%20Model%20Servers). You only need to provide the model's file location to get it turned into a service and deployed straightway on Kubernetes. In our case, this option is not appropriate. In both ML tasks, the final inference output results from preprocessing the input data and evaluating it on a deep learning model. What solves our problem is Seldon Core [Python Language Wrapper `seldon-core-microservice`](https://docs.seldon.io/projects/seldon-core/en/latest/nav/config/wrappers.html) that containerises machine learning models and code and produces docker images that are ready to run and serve requests through either REST or gRPC interfaces.
 
 Before we dive into how the code and model are converted into a microservice, we need to clarify a few concepts:
 
 - `seldon-core-microservice` wrapper expects us to create a Python class, as an entrypoint, that implements one of the abstract methods that the wrapper recognises.
 - To decide which method to include in the class, we have first to identify the service or the [component type](https://docs.seldon.io/projects/seldon-core/en/latest/python/python_component.html) of the microservice. 
-- Seldon core offers four components; Model, Combiners, Routers and Transformers. The decision on which type to select depends on what the microservice is doing and its location in the inference graph. For example; 
+- Seldon core offers four components; Model, Combiners, Routers and Transformers. The decision on which type to select depends on what the microservice is doing and its location in the runtime inference graph. For example; 
     1. If the service receives an observation and makes a prediction, then the component or service type is MODEL, and the class has to implement the `predict()` method.  
     2. If the service is needed to combine outputs from another two MODEL services, then the component type is COMBINER, and the class has to implement `aggregate()` method.
     3. For further details, [Python Components](https://docs.seldon.io/projects/seldon-core/en/latest/python/python_component.html) and [Graphs](https://docs.seldon.io/projects/seldon-core/en/latest/examples/graph-metadata.html?)
@@ -72,7 +74,7 @@ Before we dive into how the code and model are converted into a microservice, we
 
 #### Building docker images: 
 
-For text detection task: 
+For the detection task: 
 - Python class `src\inference\detection\Serving.py` implments `predict()` method which preprocess the input data and run model's evaluation function. The model is loaded in the initilization method.
  
 - In the Docker file, we have to use one of Seldon's docker base images. 
@@ -100,7 +102,7 @@ At the run time, `seldon-core-microservice` Python wrapper turns Serving.py into
 docker build --build-arg EXPERIMENT_NAME='detection' -t boundlessview/detection-infer:v1.0.0 -f docker/detection/inference.dockerfile ./
 docker push  boundlessview/detection-infer:v1.0.0
 ```
-For the text recognition task, the same structure is followed as for the detection.
+For the recognition task, the same structure is followed as for the detection.
 ```bash
 docker build --build-arg EXPERIMENT_NAME='recognition' -t boundlessview/recognition-infer:v1.0.0 -f docker/recognition/inference.dockerfile ./
 docker push boundlessview/recognition-infer:v1.0.0
@@ -216,16 +218,32 @@ A prerequisite to applying this Seldon deployment on Kubernetes is installing [S
 kubectl apply -f kube\seldon-deployment.yml
 #show the pods
 ```
-
+The deployemnt can be scaled
 
 
 ##  4. Testing Seldon Deployment  <a name="testing"></a>
-
-test through puthon request.
-
-show the image scarched.
-
-test through grpc
+Client testing scripts are available in this notebook `notebook\client-test.ipynb`. There is one to send http request and the other grpc. 
 
 
 
+## 5. Seldon Limitations <a name="limitations"></a>
+
+Data flows in the inference graph from one component to another in one direction. The component's output can't be forked between or branched into multiple child components. We experienced this limitation when attempting to implement this topology with one Seldon Deployment.
+
+We had to break it into multiple Seldon Deployments, which brought latency.
+
+This [github issue](https://github.com/SeldonIO/seldon-core/issues/419) addressses this limitation.
+
+## 6. Conclusion <a name="conclusion"></a>
+
+Three concepts are discussed in this article that makes the deployment for ML models easy and quick. We have seen how the inference code and model can be converted into a fully operational REST or gRPC microservice using Seldon Core [Python Language Wrapper `seldon-core-microservice`](https://docs.seldon.io/projects/seldon-core/en/latest/nav/config/wrappers.html). We used [Seldon Deployment CRD](https://docs.seldon.io/projects/seldon-core/en/latest/workflow/overview.html#seldondeployment-crd) to build and deploy the runtime inference graph on Kubernetes and `Orchestrator` to facilitate communications between the graph's microservices. There are other things we benefited from Seldon core out of the box. This includes the [Grafana monitoring dashboard](https://docs.seldon.io/projects/seldon-core/en/latest/analytics/analytics.html) and [A/B testing](https://docs.seldon.io/projects/seldon-core/en/latest/rollouts/abtests.html) with its integration with [iter8](https://iter8.tools/0.9/). 
+
+
+
+## References:
+
+- [Algorithmia 2021 survey](https://info.algorithmia.com/tt-state-of-ml-2021)
+- [BoundlessView](http://boundlessview.com)
+- [Faster R-CNN](https://arxiv.org/abs/1506.01497)
+- [Seldon Core](https://docs.seldon.io/projects/seldon-core/en/latest/index.html)
+- [Kubernetes Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/)
